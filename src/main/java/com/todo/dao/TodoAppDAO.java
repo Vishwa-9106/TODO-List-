@@ -14,7 +14,6 @@ public class TodoAppDAO {
     private static final String INSERT_TODO = "INSERT INTO todos (title, description, completed, created_at, updated_at) VALUES (?, ?, ?, ?, ?)";
     private static final String UPDATE_TODO = "UPDATE todos SET title = ?, description = ?, completed = ?, updated_at = ? WHERE id = ?";
     private static final String DELETE_TODO = "DELETE FROM todos WHERE id = ?";
-    private static final String SELECT_TODOS_BY_COMPLETED = "SELECT * FROM todos WHERE completed = ? ORDER BY created_at DESC";
 
     public int createtodo(Todo todo){
         DatabaseConnection db = new DatabaseConnection();
@@ -45,40 +44,6 @@ public class TodoAppDAO {
         }
     }
 
-    public boolean updateTodo(Todo todo) {
-        DatabaseConnection db = new DatabaseConnection();
-        try (
-            Connection conn = db.getConnection();
-            PreparedStatement stmt = conn.prepareStatement(UPDATE_TODO);
-        ) {
-            stmt.setString(1, todo.getTitle());
-            stmt.setString(2, todo.getDescription());
-            stmt.setBoolean(3, todo.isCompleted());
-            stmt.setTimestamp(4, Timestamp.valueOf(todo.getUpdated_at()));
-            stmt.setInt(5, todo.getId());
-            int rows = stmt.executeUpdate();
-            return rows > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    public boolean deleteTodo(int id) {
-        DatabaseConnection db = new DatabaseConnection();
-        try (
-            Connection conn = db.getConnection();
-            PreparedStatement stmt = conn.prepareStatement(DELETE_TODO);
-        ) {
-            stmt.setInt(1, id);
-            int rows = stmt.executeUpdate();
-            return rows > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
     private Todo getTodoRow(ResultSet rs) throws SQLException {
         int id = rs.getInt("id");
         String title = rs.getString("title");
@@ -104,21 +69,30 @@ public class TodoAppDAO {
         
         return todos;
     }
-
-    public List<Todo> filterTodo(boolean completed) {
-        List<Todo> todos = new ArrayList<>();
+    public boolean updatetodo(Todo todo){
         try (Connection conn = new DatabaseConnection().getConnection();
-             PreparedStatement stmt = conn.prepareStatement(SELECT_TODOS_BY_COMPLETED)) {
-            stmt.setBoolean(1, completed);
-            try (ResultSet res = stmt.executeQuery()) {
-                while (res.next()) {
-                    todos.add(getTodoRow(res));
-                }
-            }
+             PreparedStatement stmt = conn.prepareStatement(UPDATE_TODO)) {
+            
+            stmt.setString(1, todo.getTitle());
+            stmt.setString(2, todo.getDescription());
+            stmt.setBoolean(3, todo.isCompleted());
+            stmt.setTimestamp(4, Timestamp.valueOf(todo.getUpdated_at()));
+            stmt.setInt(5, todo.getId());
+            
+            int rowsAffected = stmt.executeUpdate();
+            return rowsAffected > 0;
         } catch (SQLException e) {
             e.printStackTrace();
+            return false;
         }
-        return todos;
+    }
+    public boolean deletetodo(int id) throws SQLException {
+        try (Connection conn = new DatabaseConnection().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(DELETE_TODO)) {
+            stmt.setInt(1, id);
+            int rowsAffected = stmt.executeUpdate();
+            return rowsAffected > 0;
+            
+        }
     }
 }
-
